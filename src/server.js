@@ -7,7 +7,7 @@ const parseRawXml = require('./parseRawXml');
 
 const app = express();
 const port = 3001;
-const xmlDirectory = "../SDAT-Files"; // Pfad zu Ihrem XML-Verzeichnis
+const xmlDirectory = "./SDAT-Files"; // Pfad zu Ihrem XML-Verzeichnis
 
 // Einfacher CORS-Middleware, um Cross-Origin-Anfragen zu ermöglichen.
 app.use((req, res, next) => {
@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 app.get('/xml', (req, res) => {
   fs.readdir(xmlDirectory, (err, files) => {
     if (err) {
-      res.status(500).send("Serverfehler beim Lesen des Verzeichnisses");
+      res.status(500).send({error: "Serverfehler beim Lesen des Verzeichnisses"});
       return;
     }
 
@@ -50,6 +50,7 @@ app.get('/xml', (req, res) => {
 
     // Nachdem alle Dateien verarbeitet wurden, senden wir die kombinierten Daten
     Promise.all(promises)
+      .then(() => console.log('done'))
       .then(() => res.json(combinedData))
       .catch(error => res.status(500).send('Fehler bei der Verarbeitung der XML-Dateien', error));
   });
