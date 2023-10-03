@@ -40,16 +40,23 @@ app.get('/xml', (req, res) => {
           // heart of the code
           const XML = parseRawXml(rawXmlContent);
           const data = convertToData(XML);
-          combinedData = [...combinedData, ...data]; // append data to combinedData
+          // TODO if data is empty, then do not append it to combinedData
+          if (data.length > 1) {
+            combinedData = [...combinedData, ...data]; // append data to combinedData
 
-          console.log('loading...')
-          resolve();
+            console.log('loading...' + file)
+            resolve();
+          }else{
+            resolve();
+          }
+          
         });
       });
     });
 
     // Nachdem alle Dateien verarbeitet wurden, senden wir die kombinierten Daten
     Promise.all(promises)
+      .then(() => console.log(combinedData))
       .then(() => console.log('done'))
       .then(() => res.json(combinedData))
       .catch(error => res.status(500).send('Fehler bei der Verarbeitung der XML-Dateien', error));
