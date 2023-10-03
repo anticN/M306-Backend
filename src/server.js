@@ -41,7 +41,7 @@ app.get('/xml', (req, res) => {
   console.log("got api request")
   fs.readdir(xmlDirectory, (err, files) => {
     if (err) {
-      res.status(500).send("Serverfehler beim Lesen des Verzeichnisses");
+      res.status(500).send({error: "Serverfehler beim Lesen des Verzeichnisses"});
       return;
     }
 
@@ -81,11 +81,14 @@ app.get('/xml', (req, res) => {
               reject(err);
               return;
             }
-    
+            // heart of the code
             const XML = parseRawXml(rawXmlContent);
             const data = convertToData(XML);
-            combinedData = [...combinedData, ...data]; // Daten an combinedData anhängen
-    
+            // TODO if data is empty, then do not append it to combinedData
+            if (data.length > 1) {
+              combinedData = [...combinedData, ...data]; // append data to combinedData
+  
+              console.log('loading...' + file)
             // TODO save data to cache
             cache = combinedData;
             cacheDirLength = dirLength;
@@ -96,15 +99,21 @@ app.get('/xml', (req, res) => {
                fs.writeFileSync('../datenbank/kaufSdatData.json', cacheJson);
                fs.writeFileSync('../datenbank/SkaufSdatLength.json', cacheDirLengthJson);
             resolve();
+            }else{
+              resolve();
+            }
+          
           });
         });
       });
       console.log("ist nicht gleich")
 
-      // Nachdem alle Dateien verarbeitet wurden, senden wir die kombinierten Daten
-      Promise.all(promises)
-        .then(() => res.json(combinedData))
-        .catch(error => res.status(500).send('Fehler bei der Verarbeitung der XML-Dateien', error));
+    // Nachdem alle Dateien verarbeitet wurden, senden wir die kombinierten Daten
+    Promise.all(promises)
+      .then(() => console.log(combinedData))
+      .then(() => console.log('done'))
+      .then(() => res.json(combinedData))
+      .catch(error => res.status(500).send('Fehler bei der Verarbeitung der XML-Dateien', error));
     }
   });
 });
