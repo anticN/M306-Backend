@@ -10,22 +10,19 @@ const app = express();
 const port = 3001;
 const xmlDirectory = "./SDAT-Files"; // Pfad zu Ihrem XML-Verzeichnis
 
-let dirLength = 0;
+let currentDirLenght = 0;
 
 
 function countFilesInDirectory(directoryPath) {
   try {
-      const files = fs.readdirSync(directoryPath);
-      return files.length;
+    const files = fs.readdirSync(directoryPath);
+    return files.length;
   } catch (error) {
-      console.error('Fehler beim Lesen des Verzeichnisses:', error);
-      return null;
+    console.error('Fehler beim Lesen des Verzeichnisses:', error);
+    return null;
   }
 }
 
-
-
-dirLength = countFilesInDirectory(xmlDirectory)
 
 
 
@@ -38,10 +35,9 @@ app.use((req, res, next) => {
 
 // Endpoint zum Abrufen und Verarbeiten der XML-Dateien
 app.get('/xml', (req, res) => {
-  console.log("got api request")
   fs.readdir(xmlDirectory, (err, files) => {
     if (err) {
-      res.status(500).send({error: "Serverfehler beim Lesen des Verzeichnisses"});
+      res.status(500).send({ error: "Serverfehler beim Lesen des Verzeichnisses" });
       return;
     }
 
@@ -53,25 +49,27 @@ app.get('/xml', (req, res) => {
 
     let cache = {};
     // TODO check if folder size chacnged
+    currentDirLenght = countFilesInDirectory(xmlDirectory)
 
     let cacheDirLength = 0;
-    
-      const filePath = '../datenbank/SkaufSdatLength.json';
 
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      
-      const fileNumber = JSON.parse(fileContent);
+    const filePath = '../datenbank/SkaufSdatLength.json';
 
-    
-    if (dirLength === fileNumber) { //
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+
+    const fileNumber = JSON.parse(fileContent);
+    console.log("got api request", currentDirLenght, fileNumber)
+
+
+    if (currentDirLenght === fileNumber) { //
       console.log("ist gleich")
       const contentContent = fs.readFileSync('../datenbank/kaufSdatData.json', 'utf8');
-      
+
       combinedData = JSON.parse(contentContent);
-      console.log(combinedData)
+      // console.log(combinedData)
       res.json(combinedData);
-      
-    
+
+
     } else {
       const promises = xmlFiles.map(file => {
         return new Promise((resolve, reject) => {
@@ -87,33 +85,33 @@ app.get('/xml', (req, res) => {
             // TODO if data is empty, then do not append it to combinedData
             if (data.length > 1) {
               combinedData = [...combinedData, ...data]; // append data to combinedData
-  
+
               console.log('loading...' + file)
-            // TODO save data to cache
-            cache = combinedData;
-            cacheDirLength = dirLength;
-            const cacheJson = JSON.stringify(cache);
-            const cacheDirLengthJson = JSON.stringify(cacheDirLength);
-            
-        
-               fs.writeFileSync('../datenbank/kaufSdatData.json', cacheJson);
-               fs.writeFileSync('../datenbank/SkaufSdatLength.json', cacheDirLengthJson);
-            resolve();
-            }else{
+              // TODO save data to cache
+              cache = combinedData;
+              cacheDirLength = currentDirLenght;
+              const cacheJson = JSON.stringify(cache);
+              const cacheDirLengthJson = JSON.stringify(cacheDirLength);
+
+
+              fs.writeFileSync('../datenbank/kaufSdatData.json', cacheJson);
+              fs.writeFileSync('../datenbank/SkaufSdatLength.json', cacheDirLengthJson);
+              resolve();
+            } else {
               resolve();
             }
-          
+
           });
         });
       });
       console.log("ist nicht gleich")
 
-    // Nachdem alle Dateien verarbeitet wurden, senden wir die kombinierten Daten
-    Promise.all(promises)
-      .then(() => console.log(combinedData))
-      .then(() => console.log('done'))
-      .then(() => res.json(combinedData))
-      .catch(error => res.status(500).send('Fehler bei der Verarbeitung der XML-Dateien', error));
+      // Nachdem alle Dateien verarbeitet wurden, senden wir die kombinierten Daten
+      Promise.all(promises)
+        .then(() => console.log(combinedData))
+        .then(() => console.log('done'))
+        .then(() => res.json(combinedData))
+        .catch(error => res.status(500).send('Fehler bei der Verarbeitung der XML-Dateien', error));
     }
   });
 });
