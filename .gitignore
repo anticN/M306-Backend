@@ -1,4 +1,3 @@
-/node_modules
-/ESL-Files
-/SDAT-Files
-package-lock.json
+node_modules
+ESL-Files
+SDAT-Files
