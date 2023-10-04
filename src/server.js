@@ -53,7 +53,7 @@ app.get('/xml', (req, res) => {
 
     let cacheDirLength = 0;
 
-    const filePath = '../datenbank/SkaufSdatLength.json';
+    const filePath = './datenbank/SkaufSdatLength.json';
 
     const fileContent = fs.readFileSync(filePath, 'utf8');
 
@@ -63,7 +63,7 @@ app.get('/xml', (req, res) => {
 
     if (currentDirLenght === fileNumber) { //
       console.log("ist gleich")
-      const contentContent = fs.readFileSync('../datenbank/kaufSdatData.json', 'utf8');
+      const contentContent = fs.readFileSync('./datenbank/kaufSdatData.json', 'utf8');
 
       combinedData = JSON.parse(contentContent);
       // console.log(combinedData)
@@ -94,8 +94,8 @@ app.get('/xml', (req, res) => {
               const cacheDirLengthJson = JSON.stringify(cacheDirLength);
 
 
-              fs.writeFileSync('../datenbank/kaufSdatData.json', cacheJson);
-              fs.writeFileSync('../datenbank/SkaufSdatLength.json', cacheDirLengthJson);
+              fs.writeFileSync('./datenbank/kaufSdatData.json', cacheJson);
+              fs.writeFileSync('./datenbank/SkaufSdatLength.json', cacheDirLengthJson);
               resolve();
             } else {
               resolve();
