@@ -26,7 +26,7 @@ app.get('/xml', (req, res) => {
 
     const xmlFiles = files.filter(file => file.endsWith('.xml'));
     
-    let combinedData = [];
+    let combinedData = [[], []];
     
     // Wir nutzen Promises, um alle Dateien asynchron zu lesen und zu verarbeiten
     const promises = xmlFiles.map(file => {
@@ -40,15 +40,18 @@ app.get('/xml', (req, res) => {
           // heart of the code
           const XML = parseRawXml(rawXmlContent);
           const data = convertToData(XML);
+          
           // TODO if data is empty, then do not append it to combinedData
-          if (data.length > 1) {
-            combinedData = [...combinedData, ...data]; // append data to combinedData
+          //if (data != undefined) {
+          data.sort((a, b) => a.timestamp - b.timestamp); // sort data by timestamp
+          combinedData[0] = [...combinedData[0], ...data[0]]; // append data to combinedData
+          combinedData[1] = [...combinedData[1], ...data[1]];
 
-            console.log('loading...' + file)
+          console.log('loading...' + file)
+          resolve();
+          /*}else{
             resolve();
-          }else{
-            resolve();
-          }
+          }*/
           
         });
       });
