@@ -5,8 +5,8 @@ const path = require("path");
 const convertToData = require("./convertToData");
 const parseRawXml = require("./parseRawXml");
 const removeRedundant = require("./removeRedundant")
-const getAllESL = require("./getAllESL")
 const getAllSDAT = require("./getAllSDAT")
+const getAllESL = require("./getAllESL")
 const { dir } = require("console");
 
 const app = express();
@@ -129,8 +129,8 @@ app.get("/xml", (req, res) => {
 
 app.get("/esl",  (req, res) => {
   console.log('=== processing data... ===')
-  let allESL = getAllSDAT();
-  // let allESL = getAllESL();
+  // let allESL = getAllSDAT();
+  let allESL = getAllESL();
   console.log('=== finished processing ===')
 
   console.log('=== cleaning data... ===')
