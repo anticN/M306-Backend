@@ -46,7 +46,7 @@ app.get("/xml", (req, res) => {
 
     const xmlFiles = files.filter((file) => file.endsWith(".xml"));
 
-    let combinedData = [];
+    let combinedData = [[], []];
 
     // Wir nutzen Promises, um alle Dateien asynchron zu lesen und zu verarbeiten
 
@@ -85,10 +85,14 @@ app.get("/xml", (req, res) => {
             }
             // heart of the code
             const XML = parseRawXml(rawXmlContent);
+
             const data = convertToData(XML);
+          
             // TODO if data is empty, then do not append it to combinedData
-            if (data.length > 1) {
-              combinedData = [...combinedData, ...data]; // append data to combinedData
+            //if (data != undefined) {
+            data.sort((a, b) => a.timestamp - b.timestamp); // sort data by timestamp
+            combinedData[0] = [...combinedData[0], ...data[0]]; // append data to combinedData
+            combinedData[1] = [...combinedData[1], ...data[1]];
 
               console.log("loading..." + file);
               // TODO save data to cache
@@ -103,9 +107,6 @@ app.get("/xml", (req, res) => {
                 cacheDirLengthJson
               );
               resolve();
-            } else {
-              resolve();
-            }
           });
         });
       });
@@ -125,65 +126,7 @@ app.get("/xml", (req, res) => {
   });
 });
 
-// app.get("/additiveIncome", (req, res) => {
-//   res.setHeader("Content-Type", "text/event-stream");
-//   res.setHeader("Cache-Control", "no-cache");
-//   res.setHeader("Connection", "keep-alive");
-
-//   fs.readdir(xmlDirectory, (err, files) => {
-//     if (err) {
-//       res.status(500).send("Serverfehler beim Lesen des Verzeichnisses");
-//       return;
-//     }
-
-//     const xmlFiles = files.filter((file) => file.endsWith(".xml"));
-
-//     let combinedData = [];
-
-//     // Wir nutzen Promises, um alle Dateien asynchron zu lesen und zu verarbeiten
-//     const promises = xmlFiles.map((file) => {
-//       return new Promise((resolve, reject) => {
-//         const filePath = path.join(xmlDirectory, file);
-//         fs.readFile(filePath, "utf8", (err, rawXmlContent) => {
-//           if (err) {
-//             reject(err);
-//             return;
-//           }
-//           let amountOfData = 0;
-//           // heart of the code
-//           const XML = parseRawXml(rawXmlContent);
-//           const dataSet = convertToData(XML);
-//           console.log(dataSet)
-//           combinedData.push(...dataSet);
-//           console.log("loading...");
-//           dataSet.forEach((data) => {
-//             amountOfData++;
-//           });
-//           if (amountOfData > 200) {
-//             res.write(`data: ${JSON.stringify(combinedData)}\n\n`);
-//             combinedData = [];
-//             amountOfData = 0;
-//           }
-//           resolve();
-//         });
-//       });
-//     });
-
-//     // Nachdem alle Dateien verarbeitet wurden
-//     Promise.all(promises)
-//       .then(() => {
-//         res.write(`data: ${JSON.stringify(combinedData)}\n\n`);
-//         console.log("finished");
-//         res.end();
-//       })
-//       .catch((error) =>
-//         res
-//           .status(500)
-//           .send("Fehler bei der Verarbeitung der XML-Dateien", error)
-//       );
-//   });
-// });
-
+// Endpoint zum Abrufen und Verarbeiten der XML-Dateien
 app.get("/additiveIncome", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -232,20 +175,7 @@ app.get("/additiveIncome", (req, res) => {
     // Nachdem alle Dateien verarbeitet wurden
     Promise.all(promises)
       .then(() => {
-        let index = 0;
-        const interval = setInterval(() => {
-          if (index < combinedData.length) {
-            const dataToSend = combinedData.slice(index, index + 2); // sendet jeweils 2 Datenobjekte
-            dataToSend.forEach((data) => {
-              res.write(`data: ${JSON.stringify(data)}\n\n`); // sendet Daten
-            });
-            index += 2;
-          } else {
-            console.log("finished");
-            clearInterval(interval);
-            res.end();
-          }
-        }, 500); // Sendet alle zwei Sekunden Daten
+        
       })
       .catch((error) =>
         res
