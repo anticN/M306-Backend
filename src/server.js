@@ -4,8 +4,9 @@ const path = require("path");
 
 const convertToData = require("./convertToData");
 const parseRawXml = require("./parseRawXml");
-const parseESL = require("./parseESL");
-const convertToESLData = require("./convertToESLData");
+const removeRedundant = require("./removeRedundant")
+const getAllESL = require("./getAllESL")
+const getAllSDAT = require("./getAllSDAT")
 const { dir } = require("console");
 
 const app = express();
@@ -126,84 +127,17 @@ app.get("/xml", (req, res) => {
   });
 });
 
-// Endpoint zum Abrufen und Verarbeiten der XML-Dateien
-app.get("/additiveIncome", (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-
-  fs.readdir(xmlDirectory, (err, files) => {
-    if (err) {
-      res.status(500).send("Serverfehler beim Lesen des Verzeichnisses");
-      return;
-    }
-
-    const xmlFiles = files.filter(file => file.endsWith('.xml'));
-    
-    let combinedData = [[], []];
-    
-    // Wir nutzen Promises, um alle Dateien asynchron zu lesen und zu verarbeiten
-    const promises = xmlFiles.map((file) => {
-      return new Promise((resolve, reject) => {
-        const filePath = path.join(xmlDirectory, file);
-        fs.readFile(filePath, "utf8", (err, rawXmlContent) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          // heart of the code
-          const XML = parseRawXml(rawXmlContent);
-
-          const data = convertToData(XML);
-          
-          // TODO if data is empty, then do not append it to combinedData
-          //if (data != undefined) {
-          data.sort((a, b) => a.timestamp - b.timestamp); // sort data by timestamp
-          combinedData[0] = [...combinedData[0], ...data[0]]; // append data to combinedData
-          combinedData[1] = [...combinedData[1], ...data[1]];
-
-          console.log('loading...' + file)
-          resolve();
-          /*}else{
-            resolve();
-          }*/
-          
-        });
-      });
-    });
-
-    // Nachdem alle Dateien verarbeitet wurden
-    Promise.all(promises)
-      .then(() => {
-        
-      })
-      .catch((error) =>
-        res
-          .status(500)
-          .send("Fehler bei der Verarbeitung der XML-Dateien", error)
-      );
-  });
-});
-
 app.get("/esl",  (req, res) => {
-  console.log("retrieved API request");
-  let data = []; // data to send
+  console.log('=== processing data... ===')
+  let allESL = getAllSDAT();
+  // let allESL = getAllESL();
+  console.log('=== finished processing ===')
 
-  // loop through the ESL-Files directory  
-  const directoryPath = './ESL-Files';
-  const files =  fs.readdirSync(directoryPath);
-  for (const file of files) {
-    // read each file
-    const filePath = path.join(directoryPath, file);
-    // parse the file to xml
-    const esl = parseESL(filePath);
-    // convert to data
-    const object = convertToESLData(esl);
-    if (object != null) data.push(object);
-  }
-  // return data
-  console.log('=== finished ===')
-  res.json(data);
+  console.log('=== cleaning data... ===')
+  allESL = removeRedundant(allESL);
+  console.log('=== finished cleaning ===')
+
+  res.json(allESL);
 });
 
 app.listen(port, () => {
