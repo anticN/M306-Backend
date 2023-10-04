@@ -9,19 +9,19 @@ const getALlSDAT = () => {
 
   const directoryPath = './SDAT-Files';
   const files = fs.readdirSync(directoryPath);
-  
+
   
   // loop through the ESL-Files directory  
   for (const file of files) {
-  // read each file
-  const filePath = path.join(directoryPath, file);
-  // parse the file to xml
-  const sdat = parseFile(filePath);
-  // convert to data
-  const object = convertToSDATData(sdat);
-  
-  // if verkauf / einkauf
-  data = [...data, ...object];
+    // read each file
+    const filePath = path.join(directoryPath, file);
+    // parse the file to xml
+    const sdat = parseFile(filePath);
+    // convert to data
+    const object = convertToSDATData(sdat);
+    console.log(object)
+    // if verkauf / einkauf
+    data = [...data, ...object];
 
   }
 
