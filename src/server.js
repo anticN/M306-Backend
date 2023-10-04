@@ -195,10 +195,10 @@ app.get("/additiveIncome", (req, res) => {
       return;
     }
 
-    const xmlFiles = files.filter((file) => file.endsWith(".xml"));
-
-    let combinedData = [];
-
+    const xmlFiles = files.filter(file => file.endsWith('.xml'));
+    
+    let combinedData = [[], []];
+    
     // Wir nutzen Promises, um alle Dateien asynchron zu lesen und zu verarbeiten
     const promises = xmlFiles.map((file) => {
       return new Promise((resolve, reject) => {
@@ -210,10 +210,21 @@ app.get("/additiveIncome", (req, res) => {
           }
           // heart of the code
           const XML = parseRawXml(rawXmlContent);
-          const dataSet = convertToData(XML);
-          combinedData.push(...dataSet);
-          console.log("loading...");
+
+          const data = convertToData(XML);
+          
+          // TODO if data is empty, then do not append it to combinedData
+          //if (data != undefined) {
+          data.sort((a, b) => a.timestamp - b.timestamp); // sort data by timestamp
+          combinedData[0] = [...combinedData[0], ...data[0]]; // append data to combinedData
+          combinedData[1] = [...combinedData[1], ...data[1]];
+
+          console.log('loading...' + file)
           resolve();
+          /*}else{
+            resolve();
+          }*/
+          
         });
       });
     });
