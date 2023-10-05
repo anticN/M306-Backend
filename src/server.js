@@ -10,12 +10,54 @@ const getAllESL = require("./getAllESL");
 const sort = require("./sort");
 const { dir } = require("console");
 const mergeByTimestamp = require("./mergeByTimestamp");
+const multer = require("multer"); 
+const helmet = require('helmet');
+
 
 const app = express();
 const port = 3001;
 const xmlDirectory = "./SDAT-Files"; // Pfad zu Ihrem XML-Verzeichnis
 
 let currentDirLenght = 0;
+
+//NEU!!!!!!!!!!!!!!!!!!!!!!!
+// ...
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const fileName = file.originalname;
+    const isNumeric = /^[0-9]/.test(fileName); // Check if the file name starts with a number
+
+    if (isNumeric) {
+      cb(null, './SDAT-Files'); // Save files that start with a number in the "uploads" directory
+    } else {
+      const eslDirectory = './ESL-Files';
+      if (!fs.existsSync(eslDirectory)) {
+        fs.mkdirSync(eslDirectory);
+      }
+      cb(null, eslDirectory); // Save other files in the "SDAT-Files" directory
+    }
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, file.originalname);
+  }
+});
+// ...
+
+
+
+const upload = multer({ storage: storage });
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  ); 
+  next();
+});
+
+
 
 function countFilesInDirectory(directoryPath) {
   try {
@@ -92,6 +134,23 @@ app.get("/esl", (req, res) => {
   console.log("=== finished cleaning ===");
 
   res.json(allESL);
+});
+
+//NEU!!!!!!!!!!
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    fontSrc: ["'self'", 'localhost:3000'], // Add 'localhost:3000' as the source for fonts
+    // Add other directives as needed
+  },
+}));
+
+// NEU!!!!!!!!!!!!!!!!!!!
+app.post('/upload', upload.array('files'), (req, res) => {
+  const files = req.files;
+  // Hier kannst du die hochgeladenen Dateien weiterverarbeiten
+  console.log('Received Files:', files); 
+  res.json({ message: 'Files uploaded successfully!' });
 });
 
 app.listen(port, () => {
