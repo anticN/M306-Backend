@@ -18,7 +18,6 @@ const app = express();
 const port = 3001;
 const xmlDirectory = "./SDAT-Files"; // Pfad zu Ihrem XML-Verzeichnis
 
-let currentDirLenght = 0;
 
 //NEU!!!!!!!!!!!!!!!!!!!!!!!
 // ...
@@ -81,6 +80,8 @@ app.use((req, res, next) => {
 
 // Endpoint zum Abrufen und Verarbeiten der XML-Dateien
 app.get("/xml", (req, res) => {
+  const currentDirLenght = countFilesInDirectory(xmlDirectory);
+
   let allSDAT = [];
   let cache = {};
   let cacheDirLength = 0;
@@ -97,7 +98,7 @@ app.get("/xml", (req, res) => {
     );
 
     allSDAT = JSON.parse(contentContent);
-    console.log("=== sending cache ===");
+    console.log("=== cache sent ===");
     res.json(allSDAT);
   } else {
     console.log("=== processing data... ===");
@@ -114,7 +115,7 @@ app.get("/xml", (req, res) => {
     cacheDirLength = currentDirLenght;
     const cacheJson = JSON.stringify(cache);
     const cacheDirLengthJson = JSON.stringify(cacheDirLength);
-    
+
     fs.writeFileSync("./datenbank/kaufSdatData.json", cacheJson);
     fs.writeFileSync("./datenbank/SkaufSdatLength.json", cacheDirLengthJson);
     console.log("=== cached ===");
