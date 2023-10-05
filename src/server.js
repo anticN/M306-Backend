@@ -1,39 +1,37 @@
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
+const fs = require("fs"); // Import fs
+const path = require("path"); // Import path
 
-const convertToData = require("./convertToData");
-const parseRawXml = require("./parseRawXml");
-const removeRedundant = require("./removeRedundant");
-const getAllSDAT = require("./getAllSDAT");
-const getAllESL = require("./getAllESL");
-const sort = require("./sort");
-const { dir } = require("console");
-const mergeByTimestamp = require("./mergeByTimestamp");
-const multer = require("multer"); 
-const helmet = require('helmet');
-
-
-const app = express();
-const port = 3001;
-const xmlDirectory = "./SDAT-Files"; // Pfad zu Ihrem XML-Verzeichnis
+const convertToData = require("./convertToData"); // Import convertToData
+const parseRawXml = require("./parseRawXml"); // Import parseRawXml
+const removeRedundant = require("./removeRedundant"); // Import removeRedundant
+const getAllSDAT = require("./getAllSDAT"); // Import getAllSDAT
+const getAllESL = require("./getAllESL"); // Import getAllESL
+const sort = require("./sort"); // Import sort
+const { dir } = require("console"); // Import sort
+const mergeByTimestamp = require("./mergeByTimestamp"); // Import mergeByTimestamp
+const multer = require("multer");  // Import multer
+const helmet = require('helmet'); // Import helmet
 
 
-//NEU!!!!!!!!!!!!!!!!!!!!!!!
-// ...
+const app = express(); // Express-App erstellen
+const port = 3001; // Port, auf dem der Server läuft
+const xmlDirectory = "./SDAT-Files"; // SDAT-Files directory
+
+
+//Function to put files in correct directories
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const fileName = file.originalname;
     const isNumeric = /^[0-9]/.test(fileName); // Check if the file name starts with a number
 
     if (isNumeric) {
-      cb(null, './SDAT-Files'); // Save files that start with a number in the "uploads" directory
-    } else {
+      cb(null, './SDAT-Files'); // Save files that start with a number in the "SDAT-Files" directory
       const eslDirectory = './ESL-Files';
       if (!fs.existsSync(eslDirectory)) {
         fs.mkdirSync(eslDirectory);
       }
-      cb(null, eslDirectory); // Save other files in the "SDAT-Files" directory
+      cb(null, eslDirectory); // Save other files in the "ESL-Files" directory
     }
   },
   filename: function (req, file, cb) {
@@ -41,10 +39,9 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   }
 });
-// ...
 
 
-
+//Multer can undo push restrictions
 const upload = multer({ storage: storage });
 
 app.use((req, res, next) => {
@@ -57,7 +54,7 @@ app.use((req, res, next) => {
 });
 
 
-
+//Counts files in a directory and returns the number to tell if new files were uploaded
 function countFilesInDirectory(directoryPath) {
   try {
     const files = fs.readdirSync(directoryPath);
@@ -124,7 +121,7 @@ app.get("/xml", (req, res) => {
   }
 });
 
-//NEU!!!!!!!!!
+//Function to delete files in directories
 app.post('/deleteFiles', (req, res) => {
   const sdatDirectory = './SDAT-Files';
   const eslDirectory = './ESL-Files';
@@ -165,7 +162,7 @@ app.post('/deleteFiles', (req, res) => {
 });
 
 
-
+//Processes ESL Related Data
 app.get("/esl", (req, res) => {
   console.log("=== processing data... ===");
   let allESL = getAllESL();
@@ -179,7 +176,7 @@ app.get("/esl", (req, res) => {
   res.json(allESL);
 });
 
-//NEU!!!!!!!!!!
+//Nndoes restrictions for file upload
 app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
@@ -188,7 +185,7 @@ app.use(helmet.contentSecurityPolicy({
   },
 }));
 
-// NEU!!!!!!!!!!!!!!!!!!!
+// Puts every uploaded file in a Variable "files"
 app.post('/upload', upload.array('files'), (req, res) => {
   const files = req.files;
   // Hier kannst du die hochgeladenen Dateien weiterverarbeiten
