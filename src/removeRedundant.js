@@ -11,9 +11,6 @@ const removeRedundant = (data) => {
     }
   }
 
-  result.sort((a, b) => {
-    return new Date(a.timestamp) - new Date(b.timestamp);
-  });
 
   return result;
 }

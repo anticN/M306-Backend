@@ -4,10 +4,12 @@ const path = require("path");
 
 const convertToData = require("./convertToData");
 const parseRawXml = require("./parseRawXml");
-const removeRedundant = require("./removeRedundant")
-const getAllSDAT = require("./getAllSDAT")
-const getAllESL = require("./getAllESL")
+const removeRedundant = require("./removeRedundant");
+const getAllSDAT = require("./getAllSDAT");
+const getAllESL = require("./getAllESL");
+const sort = require("./sort");
 const { dir } = require("console");
+const mergeByTimestamp = require("./mergeByTimestamp");
 
 const app = express();
 const port = 3001;
@@ -37,105 +39,57 @@ app.use((req, res, next) => {
 
 // Endpoint zum Abrufen und Verarbeiten der XML-Dateien
 app.get("/xml", (req, res) => {
-  fs.readdir(xmlDirectory, (err, files) => {
-    if (err) {
-      res
-        .status(500)
-        .send({ error: "Serverfehler beim Lesen des Verzeichnisses" });
-      return;
-    }
+  let allSDAT = [];
+  let cache = {};
+  let cacheDirLength = 0;
 
-    const xmlFiles = files.filter((file) => file.endsWith(".xml"));
+  const filePath = "./datenbank/SkaufSdatLength.json";
+  const fileContent = fs.readFileSync(filePath, "utf8");
+  const fileNumber = JSON.parse(fileContent);
 
-    let combinedData = [[], []];
+  if (currentDirLenght === fileNumber) {
+    console.log("=== cached ===");
+    const contentContent = fs.readFileSync(
+      "./datenbank/kaufSdatData.json",
+      "utf8"
+    );
 
-    // Wir nutzen Promises, um alle Dateien asynchron zu lesen und zu verarbeiten
+    allSDAT = JSON.parse(contentContent);
+    console.log("=== sending cache ===");
+    res.json(allSDAT);
+  } else {
+    console.log("=== processing data... ===");
+    allSDAT = getAllSDAT();
+    console.log("=== finished processing ===");
 
-    let cache = {};
-    // TODO check if folder size chacnged
-    currentDirLenght = countFilesInDirectory(xmlDirectory);
+    console.log("=== cleaning data... ===");
+    allSDAT = mergeByTimestamp(allSDAT);
+    allSDAT = sort(allSDAT);
+    console.log("=== finished cleaning ===");
 
-    let cacheDirLength = 0;
+    console.log("=== caching... ===");
+    cache = allSDAT;
+    cacheDirLength = currentDirLenght;
+    const cacheJson = JSON.stringify(cache);
+    const cacheDirLengthJson = JSON.stringify(cacheDirLength);
+    
+    fs.writeFileSync("./datenbank/kaufSdatData.json", cacheJson);
+    fs.writeFileSync("./datenbank/SkaufSdatLength.json", cacheDirLengthJson);
+    console.log("=== cached ===");
 
-    const filePath = "./datenbank/SkaufSdatLength.json";
-
-    const fileContent = fs.readFileSync(filePath, "utf8");
-
-    const fileNumber = JSON.parse(fileContent);
-    console.log("got api request", currentDirLenght, fileNumber);
-
-    if (currentDirLenght === fileNumber) {
-      //
-      console.log("ist gleich");
-      const contentContent = fs.readFileSync(
-        "./datenbank/kaufSdatData.json",
-        "utf8"
-      );
-
-      combinedData = JSON.parse(contentContent);
-      // console.log(combinedData)
-      res.json(combinedData);
-    } else {
-      const promises = xmlFiles.map((file) => {
-        return new Promise((resolve, reject) => {
-          const filePath = path.join(xmlDirectory, file);
-          fs.readFile(filePath, "utf8", (err, rawXmlContent) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            // heart of the code
-            const XML = parseRawXml(rawXmlContent);
-
-            const data = convertToData(XML);
-          
-            // TODO if data is empty, then do not append it to combinedData
-            //if (data != undefined) {
-            data.sort((a, b) => a.timestamp - b.timestamp); // sort data by timestamp
-            combinedData[0] = [...combinedData[0], ...data[0]]; // append data to combinedData
-            combinedData[1] = [...combinedData[1], ...data[1]];
-
-              console.log("loading..." + file);
-              // TODO save data to cache
-              cache = combinedData;
-              cacheDirLength = currentDirLenght;
-              const cacheJson = JSON.stringify(cache);
-              const cacheDirLengthJson = JSON.stringify(cacheDirLength);
-
-              fs.writeFileSync("./datenbank/kaufSdatData.json", cacheJson);
-              fs.writeFileSync(
-                "./datenbank/SkaufSdatLength.json",
-                cacheDirLengthJson
-              );
-              resolve();
-          });
-        });
-      });
-      console.log("ist nicht gleich");
-
-      // Nachdem alle Dateien verarbeitet wurden, senden wir die kombinierten Daten
-      Promise.all(promises)
-        .then(() => console.log(combinedData))
-        .then(() => console.log("done"))
-        .then(() => res.json(combinedData))
-        .catch((error) =>
-          res
-            .status(500)
-            .send("Fehler bei der Verarbeitung der XML-Dateien", error)
-        );
-    }
-  });
+    res.json(allSDAT);
+  }
 });
 
-app.get("/esl",  (req, res) => {
-  console.log('=== processing data... ===')
-  // let allESL = getAllSDAT();
+app.get("/esl", (req, res) => {
+  console.log("=== processing data... ===");
   let allESL = getAllESL();
-  console.log('=== finished processing ===')
+  console.log("=== finished processing ===");
 
-  console.log('=== cleaning data... ===')
-  allESL = removeRedundant(allESL);
-  console.log('=== finished cleaning ===')
+  console.log("=== cleaning data... ===");
+  allESL = mergeByTimestamp(allESL);
+  allESL = sort(allESL);
+  console.log("=== finished cleaning ===");
 
   res.json(allESL);
 });

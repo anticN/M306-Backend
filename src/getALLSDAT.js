@@ -22,7 +22,7 @@ const getALlSDAT = () => {
     console.log(object)
     // if verkauf / einkauf
     data = [...data, ...object];
-
+    // data.push(object)
   }
 
   return data;
