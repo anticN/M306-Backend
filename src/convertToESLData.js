@@ -1,21 +1,24 @@
 const convertToESLData = (XML) => {
-  const elementSell = XML.querySelector('ValueRow[obis="1-1:1.8.1"]')
-  const elementBuy = XML.querySelector('ValueRow[obis="1-1:2.8.1"]')
-  const date = XML.querySelector('TimePeriod');
-  
-  if (!elementSell || !elementBuy) {
-    return null;
-  }
-  const valueSell = elementSell.getAttribute('value');
-  const valueBuy = elementBuy.getAttribute('value');
-  const endDate = date.getAttribute('end');
+  let data = [];
+  const elementBezug = XML.querySelectorAll('ValueRow[obis="1-1:1.8.1"]')
+  const elementEinspesung = XML.querySelector('ValueRow[obis="1-1:2.8.1"]')
+  const date = XML.querySelectorAll('TimePeriod');
 
-  // Extrahiere den Wert des 'value'-Attributs
-  return {
-      timestamp: endDate,
-      valueSell: valueSell,
-      valueBuy: valueBuy
-    }
+  if (!elementEinspesung || !elementBezug) return null;
+
+  date.forEach(element => {
+    const currentDate = new Date(element.getAttribute('end'))
+    currentDate.setHours(currentDate.getHours() + 1);
+
+    if (!element.querySelector('ValueRow[obis="1-1:1.8.1"]') || !element.querySelector('ValueRow[obis="1-1:2.8.1"]')) return null;
+    data.push({
+      timestamp: currentDate,
+      valueBezug: parseFloat(element.querySelector('ValueRow[obis="1-1:1.8.1"]').getAttribute('value')) + parseFloat(element.querySelector('ValueRow[obis="1-1:1.8.2"]').getAttribute('value')),
+      valueEinspesung: parseFloat(element.querySelector('ValueRow[obis="1-1:2.8.1"]').getAttribute('value') + parseFloat(element.querySelector('ValueRow[obis="1-1:2.8.2"]').getAttribute('value')))
+    })
+  });
+
+  return data;
 }
 
 module.exports = convertToESLData;

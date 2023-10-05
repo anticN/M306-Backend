@@ -1,7 +1,7 @@
 const { JSDOM } = require("jsdom");
 const fs = require("fs");
 
-const parseESL = (filePath) => {
+const parseFile = (filePath) => {
   try {
     const xmlContent = fs.readFileSync(filePath, "utf8");
     return new JSDOM(xmlContent, { contentType: "text/xml" }).window.document; // parse XML
@@ -11,4 +11,4 @@ const parseESL = (filePath) => {
   }
 };
 
-module.exports = parseESL;
+module.exports = parseFile;
