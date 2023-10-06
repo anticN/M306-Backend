@@ -7,6 +7,8 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "dev": "node src/server.js",
+    "python": "python src2/main.py",
+    "flask": "python src2/main.py"
   }
 }
