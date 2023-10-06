@@ -49,6 +49,45 @@ app.use((req, res, next) => {
   next();
 });
 
+app.post('/deleteFiles', (req, res) => {
+  const sdatDirectory = './SDAT-Files';
+  const eslDirectory = './ESL-Files';
+
+  // Delete files in SDAT-Files directory
+  fs.readdir(sdatDirectory, (err, sdatFiles) => {
+    if (err) {
+      console.error('Error reading SDAT directory:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      sdatFiles.forEach(file => {
+        fs.unlink(path.join(sdatDirectory, file), err => {
+          if (err) {
+            console.error('Error deleting file:', err);
+          }
+        });
+      });
+    }
+  });
+
+  // Delete files in ESL-Files directory
+  fs.readdir(eslDirectory, (err, eslFiles) => {
+    if (err) {
+      console.error('Error reading ESL directory:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      eslFiles.forEach(file => {
+        fs.unlink(path.join(eslDirectory, file), err => {
+          if (err) {
+            console.error('Error deleting file:', err);
+          }
+        });
+      });
+
+      res.json({ message: 'Files deleted successfully!' });
+    }
+  });
+});
+
 //NEU!!!!!!!!!!
 app.use(helmet.contentSecurityPolicy({
   directives: {
